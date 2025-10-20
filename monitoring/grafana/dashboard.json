@@ -1,0 +1,43 @@
+{
+  "annotations": {
+    "list": []
+  },
+  "editable": true,
+  "gnetId": null,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "type": "stat",
+      "title": "Flask Uptime (prometheus 'up')",
+      "targets": [
+        { "expr": "up{job=\"app\"}", "format": "time_series" }
+      ],
+      "gridPos": { "x": 0, "y": 0, "w": 6, "h": 4 }
+    },
+    {
+      "type": "graph",
+      "title": "API Request Count",
+      "targets": [
+        { "expr": "sum by (endpoint) (increase(api_request_count[5m]))", "legendFormat": "{{endpoint}}" }
+      ],
+      "gridPos": { "x": 6, "y": 0, "w": 12, "h": 6 }
+    },
+    {
+      "type": "graph",
+      "title": "API Latency (p95)",
+      "targets": [
+        { "expr": "histogram_quantile(0.95, sum(rate(api_request_latency_seconds_bucket[5m])) by (le, endpoint))", "legendFormat": "{{endpoint}}" }
+      ],
+      "gridPos": { "x": 0, "y": 4, "w": 6, "h": 6 }
+    }
+  ],
+  "schemaVersion": 22,
+  "style": "dark",
+  "tags": ["public-holidays"],
+  "templating": { "list": [] },
+  "time": { "from": "now-6h", "to": "now" },
+  "timepicker": {},
+  "version": 1
+}

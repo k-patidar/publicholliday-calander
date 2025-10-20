@@ -1,0 +1,38 @@
+pipeline {
+  agent any
+
+  environment {
+    DOCKERHUB_CREDENTIALS = credentials('dockerhub-credentials')
+    SSH_CREDENTIALS = credentials('ec2-ssh')
+    DOCKER_IMAGE = "${DOCKERHUB_CREDENTIALS_USR}/public-holidays-calendar:latest"
+  }
+
+  stages {
+    stage('Checkout') {
+      steps { git url: 'https://github.com/youruser/public-holidays-calendar.git' }
+    }
+
+    stage('Build Docker') {
+      steps {
+        sh 'docker build -t ${DOCKER_IMAGE} .'
+      }
+    }
+
+    stage('Push to Docker Hub') {
+      steps {
+        withCredentials([usernamePassword(credentialsId: 'dockerhub-credentials', passwordVariable: 'PASS', usernameVariable: 'USER')]) {
+          sh 'echo $PASS | docker login -u $USER --password-stdin'
+          sh 'docker push ${DOCKER_IMAGE}'
+        }
+      }
+    }
+
+    stage('Deploy to EC2') {
+      steps {
+        sshagent (credentials: ['ec2-ssh']) {
+          sh "ssh -o StrictHostKeyChecking=no ec2-user@${EC2_HOST} 'cd ~/app && echo pulled && docker-compose pull && docker-compose up -d --build'"
+        }
+      }
+    }
+  }
+}
