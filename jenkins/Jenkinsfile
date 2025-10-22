@@ -1,38 +1,35 @@
 pipeline {
-  agent any
+    agent any
 
-  environment {
-    DOCKERHUB_CREDENTIALS = credentials('dockerhub-credentials')
-    SSH_CREDENTIALS = credentials('ec2-ssh')
-    DOCKER_IMAGE = "${DOCKERHUB_CREDENTIALS_USR}/public-holidays-calendar:latest"
-  }
-
-  stages {
-    stage('Checkout') {
-      steps { git url: 'https://github.com/youruser/public-holidays-calendar.git' }
+    environment {
+        GIT_CREDENTIALS_ID = 'github-pat' // The ID of your PAT in Jenkins credentials
     }
 
-    stage('Build Docker') {
-      steps {
-        sh 'docker build -t ${DOCKER_IMAGE} .'
-      }
-    }
-
-    stage('Push to Docker Hub') {
-      steps {
-        withCredentials([usernamePassword(credentialsId: 'dockerhub-credentials', passwordVariable: 'PASS', usernameVariable: 'USER')]) {
-          sh 'echo $PASS | docker login -u $USER --password-stdin'
-          sh 'docker push ${DOCKER_IMAGE}'
+    stages {
+        stage('Checkout') {
+            steps {
+                // Checkout GitHub repo using PAT
+                git branch: 'master',
+                    url: 'https://github.com/k-patidar/publicholliday-calander.git',
+                    credentialsId: "${GIT_CREDENTIALS_ID}"
+            }
         }
-      }
+
+        stage('Build') {
+            steps {
+                echo 'Build stage placeholder'
+                // You can add your build commands here, e.g., docker build
+            }
+        }
     }
 
-    stage('Deploy to EC2') {
-      steps {
-        sshagent (credentials: ['ec2-ssh']) {
-          sh "ssh -o StrictHostKeyChecking=no ec2-user@${EC2_HOST} 'cd ~/app && echo pulled && docker-compose pull && docker-compose up -d --build'"
+    post {
+        success {
+            echo 'Pipeline completed successfully!'
         }
-      }
+        failure {
+            echo 'Pipeline failed!'
+        }
     }
-  }
 }
+
